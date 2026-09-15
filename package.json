@@ -1,0 +1,13 @@
+{
+  "name": "jh-telecom-portal",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "google-auth-library": "^9.15.1",
+    "googleapis": "^144.0.0"
+  }
+}
