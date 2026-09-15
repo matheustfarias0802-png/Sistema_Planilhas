@@ -20,3 +20,6 @@ No OAuth Client ID, adicione o domínio da Vercel em **Origens JavaScript autori
 5. Entre com uma conta Google. O e-mail precisa estar na aba `PERMISSOES` para acessar sistemas restritos; o administrador atual é definido em `api/rpc.js`.
 
 O arquivo `src/code.gs` fica como referência do projeto original. O deploy da Vercel usa `api/rpc.js` e `src/index.html`.
+
+
+testando as alterações
