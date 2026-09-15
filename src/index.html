@@ -1,0 +1,1714 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <title>JH Telecom - Portal</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #f8fafc; --bg-card: #ffffff; --text-main: #1e293b;
+      --text-muted: #64748b; --accent-blue: #3b82f6; --border-color: #e2e8f0;
+      --status-online: #10b981; --status-warning: #f59e0b; --status-error: #ef4444;
+      --radius: 12px; --shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    }
+    body.dark {
+      --bg-primary: #0f172a; --bg-card: #1e293b; --text-main: #f1f5f9;
+      --text-muted: #94a3b8; --border-color: #334155;
+    }
+    body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg-primary); color: var(--text-main); transition: 0.3s; min-height: 100vh; overflow-x: hidden; }
+
+    .aviso-topo { background: #fef3c7; color: #92400e; padding: 12px; text-align: center; font-weight: 500; font-size: 14px; border-bottom: 1px solid #fde68a; display: none; }
+    .dark .aviso-topo { background: #451a03; color: #fbbf24; border-color: #78350f; }
+
+    header { padding: 30px 5%; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
+    input { padding: 12px 18px; border-radius: var(--radius); border: 1px solid var(--border-color); background: var(--bg-card); color: var(--text-main); width: 280px; outline: none; box-shadow: var(--shadow); }
+    .theme-toggle { background: var(--bg-card); border: 1px solid var(--border-color); padding: 10px; border-radius: var(--radius); cursor: pointer; }
+
+    .container { max-width: 1300px; margin: 0 auto 50px auto; padding: 0 5%; }
+    .category-title { font-size: 14px; text-transform: uppercase; color: var(--text-muted); margin: 40px 0 20px 0; display: flex; align-items: center; gap: 10px; }
+    .category-title::after { content: ""; height: 1px; flex-grow: 1; background: var(--border-color); }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; }
+    .card { background: var(--bg-card); padding: 24px; border-radius: var(--radius); border: 1px solid var(--border-color); box-shadow: var(--shadow); transition: 0.3s; cursor: pointer; position: relative; }
+    .card:hover { transform: translateY(-5px); border-color: var(--accent-blue); }
+    .card.bloqueado { cursor: not-allowed; opacity: 0.7; filter: grayscale(0.4); }
+    .card.processando { cursor: wait; opacity: 0.5; }
+
+    .card-icon { font-size: 32px; margin-bottom: 16px; display: block; }
+    .card h3 { margin: 0 0 8px 0; font-size: 18px; }
+    .card p { color: var(--text-muted); font-size: 14px; line-height: 1.5; height: 42px; overflow: hidden; margin-bottom: 20px; }
+
+    .atualizacao-base {
+      font-size: 11px; color: var(--text-muted); margin-top: -12px; margin-bottom: 18px;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .atualizacao-base .ponto { font-size: 10px; color: var(--status-online); }
+
+    .badge { font-size: 11px; font-weight: 600; padding: 6px 12px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px; text-transform: uppercase; }
+    .online { background: #dcfce7; color: #166534; }
+    .manutencao { background: #fef3c7; color: #92400e; }
+    .offline { background: #fee2e2; color: #991b1b; }
+    .restrito { background: #fef3c7; color: #92400e; }
+
+    .badges-container { display: flex; align-items: center; gap: 8px; }
+
+    .recentes-container { margin-bottom: 30px; animation: fadeIn 0.5s ease; }
+    .recentes-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .btn-limpar {
+      background: transparent; border: 1px solid var(--border-color); color: var(--text-muted);
+      padding: 5px 12px; border-radius: 6px; font-size: 11px; cursor: pointer; transition: 0.2s; font-weight: 600;
+    }
+    .btn-limpar:hover { background: var(--status-error); color: white; border-color: var(--status-error); }
+    .recentes-grid { display: flex; gap: 12px; overflow-x: auto; padding: 5px 2px 15px 2px; scrollbar-width: none; }
+    .recentes-grid::-webkit-scrollbar { display: none; }
+    .card-recente {
+      flex: 0 0 auto; width: 190px; background: var(--bg-card); padding: 12px; border-radius: var(--radius);
+      border: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px; cursor: pointer;
+      transition: 0.2s; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+    }
+    .card-recente:hover { border-color: var(--accent-blue); transform: translateY(-2px); box-shadow: var(--shadow); }
+    .card-recente .icon-mini { font-size: 22px; }
+    .card-recente span { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+      display: none; align-items: center; justify-content: center; z-index: 9999;
+    }
+    .modal-content {
+      background: var(--bg-card); padding: 30px; border-radius: var(--radius);
+      max-width: 400px; width: 90%; text-align: center; box-shadow: var(--shadow);
+      border: 1px solid var(--border-color); transform: scale(0.9); transition: 0.2s;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-overlay.active .modal-content { transform: scale(1); }
+    .modal-btn { background: var(--accent-blue); color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 600; margin-top: 20px; width: 100%; }
+
+    .empty-state { grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-muted); }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .titulo-jh { color: #2d52a1; font-weight: 700; }
+    body.dark .titulo-jh { color: #f1f5f9; }
+
+    .logo-container { display: flex; align-items: center; }
+    .logo-jh { height: 50px; width: auto; object-fit: contain; }
+
+    /* ======================================================
+       💡 CHAT FLUTUANTE - SUGESTÕES & ERROS
+       ====================================================== */
+    .chat-sugestoes { position: fixed; right: 25px; bottom: 25px; z-index: 9998; font-family: 'Inter', sans-serif; }
+    .chat-toggle {
+      display: flex; align-items: center; gap: 10px; background: #09124f; color: white; border: none;
+      padding: 13px 18px; border-radius: 30px; box-shadow: 0 8px 25px rgba(0,0,0,0.20); cursor: pointer;
+      font-size: 13px; font-weight: 600; transition: 0.25s;
+    }
+    .chat-toggle:hover { transform: translateY(-2px); box-shadow: 0 12px 30px rgba(0,0,0,0.25); }
+    .chat-seta { font-size: 16px; transition: 0.25s; }
+    .chat-conteudo {
+      display: none; width: 350px; height: 450px; background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: 18px; box-shadow: 0 15px 40px rgba(0,0,0,0.25); margin-bottom: 10px; overflow: hidden;
+      animation: chatAbrir 0.2s ease;
+    }
+    .chat-sugestoes.aberto .chat-conteudo { display: block; }
+    .chat-sugestoes.aberto .chat-toggle { display: none; }
+    .chat-sugestoes.aberto .chat-seta { transform: rotate(180deg); }
+    @keyframes chatAbrir { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+    @media (max-width: 600px) {
+      .chat-sugestoes { right: 12px; bottom: 12px; }
+      .chat-conteudo { width: calc(100vw - 24px); height: 430px; }
+    }
+
+    .chat-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; background: #09124f; color: white; }
+    .chat-header div { display: flex; flex-direction: column; gap: 4px; }
+    .chat-header strong { font-size: 14px; }
+    .chat-header span { font-size: 11px; opacity: 0.75; }
+    .chat-header button { background: transparent; border: none; color: white; font-size: 24px; line-height: 1; cursor: pointer; padding: 0 4px; }
+    .chat-header button:hover { opacity: 0.7; }
+
+    .chat-body { padding: 18px; height: calc(100% - 70px); box-sizing: border-box; overflow-y: auto; }
+    .chat-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 12px; }
+    .chat-opcoes { display: flex; flex-direction: column; gap: 10px; }
+    .chat-opcao {
+      width: 100%; display: flex; align-items: center; gap: 12px; padding: 13px; background: var(--bg-primary);
+      color: var(--text-main); border: 1px solid var(--border-color); border-radius: 10px; text-align: left;
+      cursor: pointer; transition: 0.2s;
+    }
+    .chat-opcao:hover { border-color: #3b82f6; transform: translateY(-1px); }
+    .chat-opcao.selecionado { border-color: #3b82f6; background: #eff6ff; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15); }
+    .chat-opcao.selecionado strong { color: #2563eb; }
+    .chat-opcao > span:first-of-type { font-size: 22px; }
+    .chat-opcao span:last-child { display: flex; flex-direction: column; gap: 3px; }
+    .chat-opcao strong { font-size: 13px; }
+    .chat-opcao small { font-size: 11px; color: var(--text-muted); }
+
+    .chat-btn-minhas {
+      width: 100%; margin-top: 14px; padding: 10px 14px; background: transparent; color: var(--text-muted);
+      border: 1px solid var(--border-color); border-radius: 10px; cursor: pointer; font-size: 12px; font-weight: 600; transition: 0.2s;
+    }
+    .chat-btn-minhas:hover { background: var(--bg-primary); color: var(--text-main); border-color: #3b82f6; }
+
+    .chat-btn-enviar {
+      width: 100%; margin-top: 10px; padding: 11px 14px; background: var(--accent-color, #09124f); color: white;
+      border: none; border-radius: 10px; cursor: pointer; font-size: 12px; font-weight: 600; transition: 0.2s;
+    }
+    .chat-btn-enviar:hover { filter: brightness(1.12); transform: translateY(-1px); }
+    .chat-btn-enviar:active { transform: translateY(0); }
+
+    .formulario-solicitacao { display: none; margin-top: 18px; }
+    .formulario-solicitacao.visivel { display: block; }
+
+    .chat-textarea {
+      width: 100%; min-height: 110px; box-sizing: border-box; resize: vertical; padding: 12px;
+      border: 1px solid var(--border-color); border-radius: 10px; background: var(--bg-primary); color: var(--text-main);
+      font-family: 'Inter', sans-serif; font-size: 13px; outline: none;
+    }
+    .chat-textarea:focus { border-color: #3b82f6; }
+
+    .chat-contador { text-align: right; font-size: 10px; color: var(--text-muted); margin-top: 5px; }
+
+    .solicitacao-item { background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 12px; padding: 13px; margin-bottom: 10px; }
+    .solicitacao-topo { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 9px; }
+    .solicitacao-topo strong { font-size: 13px; color: var(--text-main); }
+    .solicitacao-topo span { font-size: 10px; font-weight: 600; padding: 4px 8px; border-radius: 20px; background: #e0e7ff; color: #3730a3; }
+    .solicitacao-descricao { font-size: 12px; line-height: 1.5; color: var(--text-muted); margin-bottom: 10px; }
+    .solicitacao-status { display: inline-flex; align-items: center; font-size: 10px; font-weight: 600; padding: 4px 9px; border-radius: 20px; background: #fef3c7; color: #92400e; }
+    .solicitacao-status.pendente { background: #fef3c7; color: #92400e; }
+    .solicitacao-status.analise { background: #dbeafe; color: #1d4ed8; }
+    .solicitacao-status.resolvido { background: #dcfce7; color: #166534; }
+    .solicitacao-status.recusado { background: #fee2e2; color: #991b1b; }
+
+    /* ======================================================
+   🌦️ WIDGET DE CLIMA
+   ====================================================== */
+
+.clima-widget {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  padding: 7px 11px;
+  border-radius: 10px;
+  overflow: hidden;
+  transition: 0.3s;
+}
+
+
+
+.clima-info {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.clima-icone {
+  font-size: 11px;
+  display: inline-block;
+}
+
+.clima-texto {
+  font-size: 11px;
+}
+
+/* 🌦️ Garoa / chuva */
+
+.clima-widget.chuva::before,
+.clima-widget.chuva::after {
+  content: "";
+  position: absolute;
+  top: -20px;
+  width: 1px;
+  height: 12px;
+  background: #60a5fa;
+  opacity: 0.45;
+  transform: rotate(15deg);
+  animation: chuvaCaindo 0.8s linear infinite;
+}
+
+.clima-widget.chuva::before {
+  left: 35%;
+}
+
+.clima-widget.chuva::after {
+  left: 70%;
+  animation-delay: 0.4s;
+}
+
+@keyframes chuvaCaindo {
+  from {
+    transform: translateY(-10px) rotate(15deg);
+    opacity: 0;
+  }
+
+  30% {
+    opacity: 0.5;
+  }
+
+  to {
+    transform: translateY(45px) rotate(15deg);
+    opacity: 0;
+  }
+}
+
+/* ☀️ Sol */
+
+.clima-widget.sol .clima-icone {
+  animation: pulsarSol 2s ease-in-out infinite;
+}
+
+@keyframes pulsarSol {
+  0%, 100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.15);
+  }
+}
+
+/* ☁️ Nublado */
+
+.clima-widget.nublado .clima-icone {
+  animation: moverNuvem 3s ease-in-out infinite;
+}
+
+@keyframes moverNuvem {
+  0%, 100% {
+    transform: translateX(0);
+  }
+
+  50% {
+    transform: translateX(3px);
+  }
+}
+
+.dashboard-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(15,23,42,0.55); backdrop-filter: blur(2px);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.dashboard-overlay.active { opacity: 1; pointer-events: auto; }
+
+.dashboard-drawer {
+  position: absolute; top: 0; right: 0; height: 100%;
+  width: min(720px, 100%);
+  background: var(--bg-primary);
+  box-shadow: -20px 0 60px -20px rgba(0,0,0,0.35);
+  transform: translateX(100%);
+  transition: transform 0.32s cubic-bezier(.22,.9,.32,1);
+  overflow-y: auto;
+  display: flex; flex-direction: column;
+}
+.dashboard-overlay.active .dashboard-drawer { transform: translateX(0); }
+
+@media (max-width: 720px) {
+  .dashboard-drawer { width: 100%; }
+}
+
+.dashboard-drawer-header {
+  background: #09124f; color: white;
+  padding: 22px 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 2;
+}
+.dashboard-drawer-header h2 { margin: 0; font-size: 18px; font-weight: 600; }
+.dashboard-drawer-header span { font-size: 12px; opacity: 0.7; }
+.dashboard-fechar {
+  background: rgba(255,255,255,0.12); border: none; color: white;
+  width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-size: 15px;
+  transition: 0.2s;
+}
+.dashboard-fechar:hover { background: rgba(255,255,255,0.22); }
+
+.dashboard-drawer-body { padding: 28px; }
+
+/* KPIs em destaque */
+.kpi-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 34px; }
+@media (max-width: 560px) { .kpi-strip { grid-template-columns: repeat(2, 1fr); } }
+.kpi-item { border-left: 3px solid var(--accent-blue); padding-left: 14px; }
+.kpi-item.cor-verde { border-color: #10b981; }
+.kpi-item.cor-amber { border-color: #f59e0b; }
+.kpi-item.cor-vermelho { border-color: #ef4444; }
+.kpi-valor { font-size: 30px; font-weight: 700; color: var(--text-main); line-height: 1; letter-spacing: -0.02em; }
+.kpi-label { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+
+/* Seções */
+.dash-secao { margin-bottom: 34px; }
+.dash-secao-titulo { font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 14px; }
+
+/* Barras de composição por tipo */
+.dash-legenda { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }
+.dash-legenda-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); }
+.dash-legenda-ponto { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+.breakdown-linha { margin-bottom: 16px; }
+.breakdown-topo { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; color: var(--text-main); }
+.breakdown-topo b { font-weight: 600; }
+.breakdown-barra { display: flex; height: 10px; border-radius: 6px; overflow: hidden; background: var(--border-color); }
+.breakdown-seg { height: 100%; }
+
+/* Tabela de motivos (mais leve) */
+.dash-tabela { width: 100%; border-collapse: collapse; font-size: 13px; }
+.dash-tabela th { text-align: left; font-weight: 600; color: var(--text-muted); font-size: 11px; padding: 8px 10px; border-bottom: 1px solid var(--border-color); }
+.dash-tabela td { padding: 9px 10px; color: var(--text-main); border-bottom: 1px solid var(--border-color); }
+.dash-tabela tr:last-child td { font-weight: 600; border-bottom: none; }
+
+/* Reparos em campo — barra segmentada */
+.reparo-barra { display: flex; height: 14px; border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
+.reparo-seg { height: 100%; }
+.reparo-legenda { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.reparo-legenda-item { display: flex; align-items: center; justify-content: space-between; font-size: 12px; padding: 8px 10px; background: var(--bg-card); border-radius: 8px; }
+
+/* Médias */
+.medias-strip { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.media-chip { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius); padding: 16px; }
+.media-chip .kpi-valor { font-size: 24px; }
+.media-chip .kpi-label { margin-top: 4px; }
+
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+</head>
+<body>
+
+<div id="avisoTopo" class="aviso-topo">Carregando...</div>
+
+<div id="modal" class="modal-overlay">
+  <div class="modal-content">
+    <span id="modal-icon" style="font-size:50px">🛠️</span>
+    <h3 id="modal-title">Aviso</h3>
+    <p id="modal-text">Carregando informações...</p>
+    <button class="modal-btn" onclick="fecharModal()">ENTENDI</button>
+  </div>
+</div>
+
+<div id="dashboardOverlay" class="dashboard-overlay" onclick="if(event.target===this) fecharDashboardProducao()">
+  <div class="dashboard-drawer">
+    <div class="dashboard-drawer-header">
+      <div>
+        <h2>Produção JH Telecom</h2>
+        <span>Painel de Produção</span>
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="dashboard-fechar" onclick="carregarDashboardProducao(true)" id="btnAtualizarDashboard" title="Atualizar agora">🔄</button>
+        <button class="dashboard-fechar" onclick="exportarDashboardImagem()" id="btnExportarDashboard" title="Copiar como imagem">📋</button>
+        <button class="dashboard-fechar" onclick="fecharDashboardProducao()">✕</button>
+      </div>
+    </div>
+    <div class="dashboard-drawer-body" id="dashboardBody">
+      <div style="text-align:center; padding:40px; color:var(--text-muted);">Carregando dados de produção...</div>
+    </div>
+  </div>
+</div>
+
+<header>
+  <div class="logo-container">
+    <img id="logoJH" class="logo-jh"
+         src="https://drive.google.com/thumbnail?id=1v8cL4tBlYF0UrPl-caONEA4LyEsYLC6u&sz=w1000">
+  </div>
+  <div class="controls" style="display:flex; align-items:center; gap:14px;">
+    <div id="climaWidget" class="clima-widget"></div>
+    <input type="text" placeholder="🔎 Pesquisar..." onkeyup="buscar(this.value)">
+    <button class="theme-toggle" onclick="toggleDark()" id="themeBtn">🌙</button>
+  </div>
+</header>
+
+<div class="container" id="app"></div>
+
+<!-- 💡 CHAT DE SUGESTÕES -->
+<div class="chat-sugestoes" id="chatSugestoes">
+
+  <button class="chat-toggle" onclick="toggleChatSugestoes()" style="position:relative;">
+    <span>💡</span>
+    <span>Sugestões & Erros</span>
+    <span class="chat-seta"></span>
+    <span id="notificacaoSugestoes" style="
+        display:none; position:absolute; top:-3px; right:-3px; width:10px; height:10px;
+        background:#ef4444; border:2px solid var(--bg-primary); border-radius:50%; z-index:10;">
+    </span>
+  </button>
+
+  <div class="chat-conteudo" id="chatConteudo">
+
+    <div class="chat-header">
+      <div>
+        <strong>💡 Sugestões & Erros</strong>
+        <span>Ajude a melhorar o portal</span>
+      </div>
+      <button onclick="toggleChatSugestoes()" title="Fechar">×</button>
+    </div>
+
+    <div class="chat-body">
+
+      <label class="chat-label">O que você deseja informar?</label>
+
+      <div class="chat-opcoes">
+        <button type="button" class="chat-opcao" data-tipo="Sugestão">
+          💡
+          <span><strong>Sugestão</strong><small>Tenho uma ideia para melhorar o portal</small></span>
+        </button>
+        <button type="button" class="chat-opcao" data-tipo="Erro">
+          🐛
+          <span><strong>Erro</strong><small>Encontrei um problema no portal</small></span>
+        </button>
+      </div>
+
+      <input type="hidden" id="tipoSolicitacao">
+
+      <button type="button" class="chat-btn-minhas" onclick="mostrarMinhasSolicitacoes()">
+        📋 Minhas solicitações
+      </button>
+
+      <button type="button" id="btnAdministracao" class="chat-btn-minhas" onclick="mostrarAdministracao()" style="display:none;">
+        🛠️ Administração
+      </button>
+
+      <div id="formularioSolicitacao" class="formulario-solicitacao">
+        <label class="chat-label">Descreva sua solicitação</label>
+        <textarea id="descricaoSolicitacao" class="chat-textarea" placeholder="Digite aqui sua sugestão ou explique o erro..." maxlength="1000"></textarea>
+        <div class="chat-contador"><span id="contadorDescricao">0</span>/1000</div>
+        <button type="button" class="chat-btn-enviar" onclick="enviarSolicitacaoPortal()">📤 Enviar solicitação</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+
+// Compatibilidade com o código original do Apps Script. As chamadas continuam
+// usando a mesma API fluente, mas agora passam pela Function da Vercel.
+let JH_TOKEN = null;
+let JH_AUTH_PROMISE = null;
+
+function jhAuth() {
+  if (JH_TOKEN) return Promise.resolve(JH_TOKEN);
+  if (JH_AUTH_PROMISE) return JH_AUTH_PROMISE;
+
+  JH_AUTH_PROMISE = fetch("/api/config")
+    .then(response => response.json())
+    .then(config => new Promise((resolve, reject) => {
+      if (!config.clientId) {
+        reject(new Error("GOOGLE_CLIENT_ID não configurado ou Google Identity Services indisponível."));
+        return;
+      }
+
+      const iniciarLogin = () => {
+        if (!window.google?.accounts?.id) {
+          setTimeout(iniciarLogin, 100);
+          return;
+        }
+        window.google.accounts.id.initialize({
+          client_id: config.clientId,
+          callback: credential => {
+            JH_TOKEN = credential.credential;
+            resolve(JH_TOKEN);
+          }
+        });
+        window.google.accounts.id.prompt(notification => {
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            reject(new Error("Faça login com uma conta Google para acessar o portal."));
+          }
+        });
+      };
+      iniciarLogin();
+    }));
+
+  return JH_AUTH_PROMISE;
+}
+
+function jhRpc(method, args, success, failure) {
+  jhAuth()
+    .then(token => fetch("/api/rpc", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+      body: JSON.stringify({ method, args })
+    }))
+    .then(async response => {
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error || "Erro na API.");
+      return body.result;
+    })
+    .then(result => success && success(result))
+    .catch(error => failure && failure(error));
+}
+
+function criarJhRun() {
+  let successHandler = null;
+  let failureHandler = null;
+  const runner = new Proxy({}, {
+    get(_target, property) {
+      if (property === "withSuccessHandler") return handler => { successHandler = handler; return runner; };
+      if (property === "withFailureHandler") return handler => { failureHandler = handler; return runner; };
+      return (...args) => {
+        jhRpc(property, args, successHandler, failureHandler);
+      };
+    }
+  });
+  return runner;
+}
+
+window.google = window.google || {};
+window.google.script = { get run() { return criarJhRun(); } };
+
+const LOGO_NORMAL = "https://drive.google.com/thumbnail?id=1v8cL4tBlYF0UrPl-caONEA4LyEsYLC6u&sz=w1000";
+const LOGO_BRANCA = "https://drive.google.com/thumbnail?id=1Bgd8AzgumMdl-AxVnOVFQ00-3wvY2jVo&sz=w1000";
+
+// --- ORDEM DAS CATEGORIAS ---
+const ORDEM_MANUAL = ["Operação","Agendamentos","Sistemas","Indicadores","Formulários","Rede Externa","Banco de Dados","Gestão"];
+
+let DATA = [];
+let MINHAS_PERMISSOES = [];
+let PORTAL_VERSION = null;
+let USER_EMAIL = "";
+let SOU_ADMIN = false;
+let PROCESSANDO = false;
+
+// Guarda o último JSON de links recebido, para só re-renderizar quando
+// os dados realmente mudarem (evita reconstruir o DOM inteiro a cada
+// atualização automática de 60s sem necessidade).
+let ULTIMO_LINKS_JSON = "";
+let INTERVALO_DASHBOARD = null;
+
+window.onload = function() {
+  const temaSalvo = localStorage.getItem('tema_jh');
+
+  if (temaSalvo === 'dark') {
+    document.body.classList.add("dark");
+    document.getElementById("themeBtn").innerText = "☀️";
+    document.getElementById("logoJH").src = LOGO_BRANCA;
+  } else {
+    document.getElementById("logoJH").src = LOGO_NORMAL;
+  }
+
+  bindFormularioSugestao();
+  bindCliquesGrid();
+
+  carregarDados();
+  google.script.run.registrarAcessoPortal("Portal Aberto", "Sessão Iniciada");
+};
+
+// 🔄 ATUALIZA O PORTAL AUTOMATICAMENTE A CADA 1 MINUTO
+setInterval(() => {
+  carregarDados();
+}, 60000);
+
+// ======================================================
+// 🔄 CARREGAMENTO DE DADOS
+// ------------------------------------------------------
+// ÚNICA chamada RPC para trazer tudo (links, aviso, usuário, admin,
+// permissões, versão, atualizações de bases e notificações). Antes
+// existiam 4 chamadas google.script.run separadas (getPortalData,
+// verificarAdminPortal, verificarNotificacoesSolicitante e
+// verificarNotificacoesAdmin) disparadas em paralelo a cada
+// carregamento e a cada 60s — cada uma é um round-trip de rede.
+// ======================================================
+function carregarDados() {
+  google.script.run
+    .withSuccessHandler(res => {
+      if (!res) {
+        console.error("getPortalData retornou vazio!");
+        return;
+      }
+
+      // ⏱️ Marca a hora da última atualização bem-sucedida
+      atualizarRelogioRodape();
+
+      USER_EMAIL = res.user || "";
+      SOU_ADMIN = res.admin || false;
+      MINHAS_PERMISSOES = res.permissoes || [];
+      PORTAL_VERSION = res.version || "";
+
+      window.ATUALIZACAO_BASE = res.atualizacaoBase || "";
+      window.ATUALIZACAO_AGENDAMENTOS = res.atualizacaoAgendamentos || "";
+      window.ATUALIZACAO_REMANEJAMENTO = res.atualizacaoRemanejamento || "";
+
+      // 🌦️ Clima (vindo junto com getPortalData, sem RPC extra)
+      const climaEl = document.getElementById("climaWidget");
+
+      if (climaEl && res.clima && res.clima.temperatura !== null && res.clima.temperatura !== undefined) {
+
+        const temperatura = res.clima.temperatura;
+        const condicao = res.clima.condicao || "";
+
+        // Separa o emoji do texto (formato vindo do backend: "☀️ Céu limpo")
+        // para que só o emoji tenha a animação — texto e grau ficam parados.
+        const partesCondicao = condicao.split(" ");
+        const emoji = partesCondicao[0] || "";
+        const textoCondicao = partesCondicao.slice(1).join(" ");
+
+        let classe = "nublado";
+
+        if (
+          condicao.includes("Garoa") ||
+          condicao.includes("Chuva") ||
+          condicao.includes("Trovoada")
+        ) {
+          classe = "chuva";
+        }
+        else if (
+          condicao.includes("Ensolarado") ||
+          condicao.includes("Céu limpo")
+        ) {
+          classe = "sol";
+        }
+
+        climaEl.className = "clima-widget " + classe;
+
+        climaEl.innerHTML = `
+          <div class="clima-info">
+            <span class="clima-icone">${emoji}</span>
+            <span class="clima-texto">${textoCondicao}</span>
+            <span>${temperatura}°C</span>
+          </div>
+        `;
+      } else if (climaEl) {
+        // Sem dado de clima disponível (API falhou ou ainda não
+        // respondeu) — deixa o widget vazio em vez de mostrar
+        // "null°C" ou um texto quebrado.
+        climaEl.className = "clima-widget";
+        climaEl.innerHTML = "";
+      }
+
+      const btnAdmin = document.getElementById("btnAdministracao");
+      if (btnAdmin) btnAdmin.style.display = SOU_ADMIN ? "block" : "none";
+
+      // Notificações (agora vindas junto com getPortalData, sem RPC extra)
+      const notificacao = document.getElementById("notificacaoSugestoes");
+      if (notificacao) {
+        const temNotificacao = (res.notificacoesUsuario > 0) || (SOU_ADMIN && res.notificacoesAdmin > 0);
+        notificacao.style.display = temNotificacao ? "block" : "none";
+      }
+
+      // Só re-renderiza a grade se os links realmente mudaram
+      const novosLinks = res.links || [];
+      const novosLinksJson = JSON.stringify(novosLinks);
+      const linksMudaram = novosLinksJson !== ULTIMO_LINKS_JSON;
+
+      DATA = novosLinks;
+      ULTIMO_LINKS_JSON = novosLinksJson;
+
+      if (linksMudaram) {
+        render(DATA);
+      }
+
+      const av = document.getElementById("avisoTopo");
+      if (av) {
+        if (res.aviso) {
+          av.innerText = res.aviso;
+          av.style.display = "block";
+        } else {
+          av.style.display = "none";
+        }
+      }
+    })
+    .withFailureHandler(err => {
+      console.error("ERRO NO getPortalData:", err);
+    })
+    .getPortalData();
+}
+
+// Mostra no rodapé da página a hora da última vez que os dados foram
+// atualizados (chamada a cada carregamento bem-sucedido de carregarDados()).
+function atualizarRelogioRodape() {
+  const el = document.getElementById("ultimaAtualizacao");
+  if (!el) return;
+
+  const agora = new Date();
+  const hora = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  el.innerText = "Última atualização: " + hora;
+}
+
+function statusClass(s) {
+  if(!s) return "offline";
+  s = s.toLowerCase();
+  if(s.includes("online")) return "online";
+  if(s.includes("manutencao") || s.includes("manutenção") || s.includes("inst")) return "manutencao";
+  return "offline";
+}
+
+function salvarRecente(nome) {
+  let recentes = JSON.parse(localStorage.getItem('recentes_jh') || "[]");
+  recentes = recentes.filter(r => r !== nome);
+  recentes.unshift(nome);
+  localStorage.setItem('recentes_jh', JSON.stringify(recentes.slice(0, 5)));
+}
+
+function limparRecentes() {
+  localStorage.removeItem('recentes_jh');
+  render(DATA);
+}
+
+function renderRecentes() {
+  const recentes = JSON.parse(localStorage.getItem('recentes_jh') || "[]");
+  if(recentes.length === 0) return "";
+
+  let html = `
+    <div class="recentes-container">
+      <div class="recentes-header">
+        <h2 class="category-title" style="margin:0; border:none;"> Acessos Recentes</h2>
+        <button class="btn-limpar" onclick="limparRecentes()">Limpar Tudo</button>
+      </div>
+      <div class="recentes-grid">
+  `;
+
+  recentes.forEach(nome => {
+    const s = DATA.find(d => d.nome === nome);
+    if(s) {
+      const sc = statusClass(s.status);
+      // data-* em vez de onclick com strings interpoladas: evita quebrar
+      // o HTML quando nome/link contêm aspas ou caracteres especiais.
+      html += `
+        <div class="card-recente" data-link="${escapeAttr(s.link)}" data-nome="${escapeAttr(s.nome)}" data-status="${sc}">
+          <span class="icon-mini">${s.icone}</span>
+          <span>${s.nome}</span>
+        </div>
+      `;
+    }
+  });
+
+  html += `</div></div>`;
+  return html;
+}
+
+function textoAtualizacao(dataHora) {
+  if (!dataHora) return "";
+
+  const texto = String(dataHora).trim();
+  const matchData = texto.match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?/);
+  const matchHora = texto.match(/(\d{1,2}:\d{2}(?::\d{2})?)/);
+
+  if (!matchData) return `Atualizado ${texto}`;
+
+  const dia = Number(matchData[1]);
+  const mes = Number(matchData[2]);
+  const ano = matchData[3] ? Number(matchData[3]) : new Date().getFullYear();
+  const hora = matchHora ? matchHora[1] : "";
+
+  const hoje = new Date();
+  if (dia === hoje.getDate() && mes === hoje.getMonth() + 1 && ano === hoje.getFullYear()) {
+    return `Atualizado hoje, ${hora}`;
+  }
+
+  const ontem = new Date();
+  ontem.setDate(ontem.getDate() - 1);
+  if (dia === ontem.getDate() && mes === ontem.getMonth() + 1 && ano === ontem.getFullYear()) {
+    return `Atualizado ontem, ${hora}`;
+  }
+
+  return `Atualizado ${String(dia).padStart(2, "0")}/${String(mes).padStart(2, "0")}, ${hora}`;
+}
+
+// Escapa aspas para uso seguro dentro de atributos data-*
+function escapeAttr(str) {
+  return String(str || "").replace(/"/g, "&quot;");
+}
+
+// ======================================================
+// 🖼️ RENDER (ÚNICA VERSÃO)
+// ------------------------------------------------------
+// O arquivo original tinha DUAS funções render() declaradas — a segunda
+// sobrescrevia a primeira, então a primeira nunca era usada (código
+// morto). Mantida apenas esta versão, que já suporta busca.
+// Os cards agora usam data-* em vez de onclick inline interpolado.
+// ======================================================
+function render(data, searchTerm = "") {
+  const app = document.getElementById("app");
+  app.innerHTML = "";
+
+  if(DATA.length > 0 && searchTerm === "") {
+    app.innerHTML = renderRecentes();
+  }
+
+  if(data.length === 0) {
+    app.innerHTML += `<div class="empty-state">Nenhum sistema encontrado${searchTerm ? ` para "${searchTerm}"` : ""}.</div>`;
+    return;
+  }
+
+  const grupos = {};
+  data.forEach(d => {
+    if(!grupos[d.categoria]) grupos[d.categoria] = [];
+    grupos[d.categoria].push(d);
+  });
+
+  Object.keys(grupos).sort((a, b) => {
+    let idxA = ORDEM_MANUAL.indexOf(a);
+    let idxB = ORDEM_MANUAL.indexOf(b);
+    if (idxA === -1) idxA = 999;
+    if (idxB === -1) idxB = 999;
+    return idxA - idxB;
+  }).forEach(cat => {
+    const section = document.createElement('section');
+    section.innerHTML = `
+      <h2 class="category-title">${cat}</h2>
+      <div class="grid">
+        ${grupos[cat].sort((a,b) => (a.ordem || 0) - (b.ordem || 0)).map(d => {
+          const sc = statusClass(d.status);
+          const bloqueado = (sc === "manutencao" || sc === "offline");
+          return `
+            <article class="card ${bloqueado ? 'bloqueado' : ''}" data-link="${escapeAttr(d.link)}" data-nome="${escapeAttr(d.nome)}" data-status="${sc}">
+              <span class="card-icon">${d.icone}</span>
+              <h3>${d.nome}</h3>
+              <p>${d.obs}</p>
+
+              ${d.nome === "Planilha de Prazos" && window.ATUALIZACAO_BASE ? `
+                <div class="atualizacao-base">
+                  <span class="ponto">●</span>
+                  ${textoAtualizacao(window.ATUALIZACAO_BASE)}
+                </div>
+              ` : ""}
+
+              ${d.nome === "Planilha de Agendamentos" && window.ATUALIZACAO_AGENDAMENTOS ? `
+                <div class="atualizacao-base">
+                  <span class="ponto">●</span>
+                  ${textoAtualizacao(window.ATUALIZACAO_AGENDAMENTOS)}
+                </div>
+              ` : ""}
+
+              ${d.nome === "Produção | Remanejamento" && window.ATUALIZACAO_REMANEJAMENTO ? `
+                <div class="atualizacao-base">
+                  <span class="ponto">●</span>
+                  ${textoAtualizacao(window.ATUALIZACAO_REMANEJAMENTO)}
+                </div>
+              ` : ""}
+
+              <div class="badges-container">
+                <div class="badge ${sc}">
+                  ${sc === 'manutencao' ? 'Manutenção' : d.status}
+                </div>
+                ${d.acesso === "Restrito" ? `<div class="badge restrito">🔒 RESTRITO</div>` : ""}
+              </div>
+            </article>
+          `;
+        }).join("")}
+      </div>
+    `;
+    app.appendChild(section);
+  });
+}
+
+function tentarAbrir(link, nome, status, cardElement) {
+  if(PROCESSANDO) return;
+
+  const sc = status.toLowerCase();
+  if(sc.includes("manutencao") || sc.includes("offline")) {
+    abrirModal("🛠️", "Manutenção", "O sistema " + nome + " está em manutenção.");
+    return;
+  }
+
+  const sistema = DATA.find(d => d.nome === nome);
+  const ehLivre = sistema && sistema.acesso === "Livre";
+  const tenhoPermissao = MINHAS_PERMISSOES.includes(nome);
+
+  if(ehLivre || tenhoPermissao) {
+    if (String(link || "").trim() === "internal:dashboard-producao") {
+      salvarRecente(nome);
+      abrirDashboardProducao();
+      return;
+    }
+
+    PROCESSANDO = true;
+    if (cardElement) cardElement.classList.add("processando");
+    salvarRecente(nome);
+    window.open(link, "_blank");
+    google.script.run.withSuccessHandler(() => {
+      PROCESSANDO = false;
+      if (cardElement) cardElement.classList.remove("processando");
+      render(DATA);
+    }).registrarAcessoPortal(nome, "OK");
+  } else {
+    google.script.run.registrarAcessoPortal(nome, "NEGADO");
+    abrirModal("🚫", "Acesso Restrito", "Você não tem permissão para acessar o sistema: <b>"+nome+"</b>.");
+  }
+}
+
+// ======================================================
+// 🖱️ DELEGAÇÃO DE EVENTOS PARA OS CARDS
+// ------------------------------------------------------
+// Como o #app é recriado a cada render(), um único listener no
+// container (delegação) evita ter que religar onclick em cada card
+// individualmente e evita o problema de nomes/links com aspas
+// quebrando o HTML (não há mais strings interpoladas em onclick).
+// ======================================================
+function bindCliquesGrid() {
+  const app = document.getElementById("app");
+  if (!app) return;
+
+  app.addEventListener("click", function(evento) {
+    const card = evento.target.closest(".card, .card-recente");
+    if (!card || !app.contains(card)) return;
+
+    const link = card.getAttribute("data-link");
+    const nome = card.getAttribute("data-nome");
+    const status = card.getAttribute("data-status");
+
+    tentarAbrir(link, nome, status, card);
+  });
+}
+
+function abrirModal(icone, titulo, texto) {
+  document.getElementById("modal-icon").innerText = icone;
+  document.getElementById("modal-title").innerText = titulo;
+  document.getElementById("modal-text").innerHTML = texto;
+  document.getElementById("modal").classList.add("active");
+}
+
+function fecharModal() { document.getElementById("modal").classList.remove("active"); }
+
+function buscar(txt) {
+  const t = txt.toLowerCase();
+  render(DATA.filter(d => d.nome.toLowerCase().includes(t) || d.categoria.toLowerCase().includes(t)), t);
+}
+
+function toggleDark() {
+  const isDark = document.body.classList.toggle("dark");
+  document.getElementById("themeBtn").innerText = isDark ? "☀️" : "🌙";
+  document.getElementById("logoJH").src = isDark ? LOGO_BRANCA : LOGO_NORMAL;
+  localStorage.setItem('tema_jh', isDark ? 'dark' : 'light');
+}
+
+function toggleChatSugestoes() {
+  const chat = document.getElementById("chatSugestoes");
+  if (!chat) return;
+
+  const vaiFechar = chat.classList.contains("aberto");
+
+  if (vaiFechar) {
+    voltarFormularioSugestao();
+    chat.classList.remove("aberto");
+  } else {
+    chat.classList.add("aberto");
+  }
+}
+
+function selecionarTipo(tipo, botaoClicado) {
+  document.getElementById("tipoSolicitacao").value = tipo;
+
+  document.querySelectorAll(".chat-opcao").forEach(botao => {
+    botao.classList.remove("selecionado");
+  });
+
+  if (botaoClicado) botaoClicado.classList.add("selecionado");
+
+  document.getElementById("formularioSolicitacao").classList.add("visivel");
+}
+
+// ======================================================
+// 🔗 BINDINGS DO FORMULÁRIO DE SUGESTÃO
+// ------------------------------------------------------
+// Antes o listener do textarea era registrado tanto no escopo global
+// do <script> (rodando uma vez, no primeiro HTML estático) quanto
+// dentro de voltarFormularioSugestao() (rodando de novo a cada vez que
+// o formulário era recriado via innerHTML). Como o elemento é
+// recriado, o listener global do topo se perdia sozinho — mas ainda
+// assim era redundante e confuso. Agora existe UMA função de bind,
+// chamada sempre que o HTML do formulário é (re)inserido no DOM.
+// ======================================================
+function bindFormularioSugestao() {
+  document.querySelectorAll(".chat-opcao").forEach(botao => {
+    botao.addEventListener("click", function() {
+      selecionarTipo(this.getAttribute("data-tipo"), this);
+    });
+  });
+
+  const textarea = document.getElementById("descricaoSolicitacao");
+  const contador = document.getElementById("contadorDescricao");
+
+  if (textarea && contador) {
+    textarea.addEventListener("input", function() {
+      contador.innerText = this.value.length;
+    });
+  }
+
+  const btnAdmin = document.getElementById("btnAdministracao");
+  if (btnAdmin) {
+    btnAdmin.style.display = SOU_ADMIN === true ? "block" : "none";
+  }
+}
+
+function mostrarMinhasSolicitacoes() {
+  const chatBody = document.querySelector(".chat-body");
+
+  google.script.run.marcarSolicitacoesLidasUsuario();
+
+  chatBody.innerHTML = `
+    <div style="text-align:center; padding:30px 10px;">
+      <div style="font-size:30px;">⏳</div>
+      <p style="font-size:13px; color:var(--text-muted);">
+        Carregando suas solicitações...
+      </p>
+    </div>
+  `;
+
+  google.script.run
+    .withSuccessHandler(solicitacoes => {
+
+      if (!solicitacoes || solicitacoes.length === 0) {
+        chatBody.innerHTML = `
+          <div style="text-align:center; padding:30px 10px;">
+            <div style="font-size:35px;">📋</div>
+            <strong>Nenhuma solicitação</strong>
+            <p style="font-size:12px; color:var(--text-muted);">
+              Você ainda não enviou nenhuma sugestão ou erro.
+            </p>
+            <button type="button" class="chat-btn-minhas" onclick="voltarFormularioSugestao()">← Voltar</button>
+          </div>
+        `;
+        return;
+      }
+
+      let html = `<div><label class="chat-label">Minhas solicitações</label>`;
+
+      solicitacoes.reverse().forEach(item => {
+        const status = (item.status || "Pendente").toString();
+
+        let classeStatus = "pendente";
+        let iconeStatus = "🟡";
+
+        if (status === "Em análise") { classeStatus = "analise"; iconeStatus = "🔵"; }
+        else if (status === "Resolvido") { classeStatus = "resolvido"; iconeStatus = "🟢"; }
+        else if (status === "Recusado") { classeStatus = "recusado"; iconeStatus = "🔴"; }
+
+        html += `
+          <div class="solicitacao-item">
+            <div class="solicitacao-topo">
+              <strong>${item.id}</strong>
+              <span>${item.tipo}</span>
+            </div>
+            <div class="solicitacao-descricao">${item.descricao}</div>
+            <div class="solicitacao-status ${classeStatus}">${iconeStatus} ${status}</div>
+            ${item.resposta ? `
+              <div style="margin-top:12px; padding:10px; border-radius:8px; background:var(--bg-card); border:1px solid var(--border-color);">
+                <div style="font-size:10px; font-weight:600; color:var(--text-muted); margin-bottom:5px;">💬 RESPOSTA</div>
+                <div style="font-size:12px; line-height:1.5; color:var(--text-main);">${item.resposta}</div>
+                ${item.dataResposta ? `<div style="font-size:10px; color:var(--text-muted); margin-top:7px;">📅 ${item.dataResposta}</div>` : ""}
+              </div>
+            ` : ""}
+          </div>
+        `;
+      });
+
+      html += `
+          <button type="button" class="chat-btn-minhas" onclick="voltarFormularioSugestao()">← Voltar</button>
+        </div>
+      `;
+
+      chatBody.innerHTML = html;
+    })
+    .withFailureHandler(err => {
+      console.error(err);
+      chatBody.innerHTML = `
+        <div style="text-align:center; padding:30px 10px;">
+          <div style="font-size:35px;">❌</div>
+          <strong>Não foi possível carregar</strong>
+          <button type="button" class="chat-btn-minhas" onclick="voltarFormularioSugestao()">← Voltar</button>
+        </div>
+      `;
+    })
+    .getMinhasSolicitacoes();
+}
+
+function voltarFormularioSugestao() {
+  const chatBody = document.querySelector(".chat-body");
+  if (!chatBody) return;
+
+  chatBody.innerHTML = `
+    <label class="chat-label">O que você deseja informar?</label>
+
+    <div class="chat-opcoes">
+      <button type="button" class="chat-opcao" data-tipo="Sugestão">
+        💡
+        <span><strong>Sugestão</strong><small>Tenho uma ideia para melhorar o portal</small></span>
+      </button>
+      <button type="button" class="chat-opcao" data-tipo="Erro">
+        🐛
+        <span><strong>Erro</strong><small>Encontrei um problema no portal</small></span>
+      </button>
+    </div>
+
+    <input type="hidden" id="tipoSolicitacao">
+
+    <button type="button" class="chat-btn-minhas" onclick="mostrarMinhasSolicitacoes()">📋 Minhas solicitações</button>
+    <button type="button" id="btnAdministracao" class="chat-btn-minhas" onclick="mostrarAdministracao()" style="display:none;">🛠️ Administração</button>
+
+    <div id="formularioSolicitacao" class="formulario-solicitacao">
+      <label class="chat-label">Descreva sua solicitação</label>
+      <textarea id="descricaoSolicitacao" class="chat-textarea" placeholder="Digite aqui sua sugestão ou explique o erro..." maxlength="1000"></textarea>
+      <div class="chat-contador"><span id="contadorDescricao">0</span>/1000</div>
+      <button type="button" class="chat-btn-enviar" onclick="enviarSolicitacaoPortal()">📤 Enviar solicitação</button>
+    </div>
+  `;
+
+  // Reaplica os listeners (o único ponto de bind do formulário)
+  bindFormularioSugestao();
+}
+
+function enviarSolicitacaoPortal() {
+  const tipo = document.getElementById("tipoSolicitacao").value;
+  const descricao = document.getElementById("descricaoSolicitacao").value.trim();
+
+  if (!tipo) {
+    alert("Selecione se deseja enviar uma Sugestão ou um Erro.");
+    return;
+  }
+
+  if (!descricao) {
+    alert("Digite uma descrição antes de enviar.");
+    return;
+  }
+
+  const botao = document.querySelector(".chat-btn-enviar");
+  botao.disabled = true;
+  botao.innerText = "⏳ Enviando...";
+
+  google.script.run
+    .withSuccessHandler(res => {
+
+      if (res && res.sucesso) {
+        const chatBody = document.querySelector(".chat-body");
+
+        chatBody.innerHTML = `
+          <div style="text-align:center; padding:30px 10px;">
+            <div style="font-size:40px; margin-bottom:10px;">✅</div>
+            <strong style="font-size:15px;">Solicitação enviada!</strong>
+            <p style="font-size:12px; color:var(--text-muted); margin:8px 0 18px;">
+              Sua solicitação foi registrada com sucesso.
+            </p>
+            <div style="display:inline-block; padding:7px 12px; border-radius:20px; background:#e0e7ff; color:#3730a3; font-size:12px; font-weight:600;">
+              ${res.id}
+            </div>
+            <button type="button" class="chat-btn-minhas" onclick="voltarFormularioSugestao()">← Voltar</button>
+          </div>
+        `;
+      } else {
+        alert("❌ Não foi possível enviar.\n\n" + (res?.erro || "Erro desconhecido."));
+        botao.disabled = false;
+        botao.innerText = "📤 Enviar solicitação";
+      }
+    })
+    .withFailureHandler(err => {
+      alert("❌ Ocorreu um erro ao enviar a solicitação.");
+      console.error(err);
+      botao.disabled = false;
+      botao.innerText = "📤 Enviar solicitação";
+    })
+    .enviarSolicitacao(tipo, descricao);
+}
+
+function mostrarAdministracao() {
+  const body = document.querySelector("#chatSugestoes .chat-body");
+  if (!body) return;
+
+  body.innerHTML = `
+    <div style="padding: 10px 0;">
+      <h3 style="margin: 0 0 6px; font-size: 15px; color: var(--text-main);">🛠️ Administração</h3>
+      <p style="margin: 0 0 16px; font-size: 12px; color: var(--text-muted);">
+        Gerencie as sugestões e erros enviados pelos usuários.
+      </p>
+      <button type="button" class="chat-btn-minhas" onclick="mostrarSolicitacoesAdministracao()">📋 Solicitações recebidas</button>
+      <button type="button" class="chat-btn-minhas" onclick="voltarFormularioSugestao()">← Voltar</button>
+    </div>
+  `;
+}
+
+function mostrarSolicitacoesAdministracao() {
+  const body = document.querySelector("#chatSugestoes .chat-body");
+  if (!body) return;
+
+  body.innerHTML = `
+    <div style="padding: 10px 0;">
+      <h3 style="margin: 0 0 6px; font-size: 15px; color: var(--text-main);">📋 Solicitações recebidas</h3>
+      <div id="listaSolicitacoesAdmin">
+        <div style="text-align:center; padding:25px; color:var(--text-muted);">Carregando solicitações...</div>
+      </div>
+      <button type="button" class="chat-btn-minhas" onclick="mostrarAdministracao()">← Voltar</button>
+    </div>
+  `;
+
+  google.script.run
+    .withSuccessHandler(solicitacoes => {
+      const lista = document.getElementById("listaSolicitacoesAdmin");
+      if (!lista) return;
+
+      if (!solicitacoes || solicitacoes.length === 0) {
+        lista.innerHTML = `<div style="text-align:center; padding:25px; color:var(--text-muted);">Nenhuma solicitação encontrada.</div>`;
+        return;
+      }
+
+      lista.innerHTML = solicitacoes.map(item => `
+        <div class="item-solicitacao-admin" data-id="${escapeAttr(item.id)}" style="
+            border:1px solid var(--border-color); border-radius:10px; padding:12px; margin-bottom:10px;
+            background:var(--bg-primary); cursor:pointer; transition:0.2s;"
+          onmouseover="this.style.borderColor='#3b82f6'"
+          onmouseout="this.style.borderColor='var(--border-color)'">
+          <div style="font-size:11px; color:var(--text-muted); margin-bottom:5px;">${item.data || ""}</div>
+          <div style="font-size:12px; font-weight:600; color:var(--text-main);">${item.tipo || "Sem tipo"}</div>
+          <div style="font-size:12px; color:var(--text-main); margin-top:7px; line-height:1.4;">${item.descricao || ""}</div>
+          <div style="font-size:10px; color:var(--text-muted); margin-top:8px;">👤 ${item.email || ""}</div>
+          <div style="margin-top:10px; font-size:11px; font-weight:600;">Status: ${item.status || "Pendente"}</div>
+          <div style="margin-top:8px; font-size:10px; color:var(--accent-blue); font-weight:600;">👆 Clique para analisar</div>
+        </div>
+      `).join("");
+
+      // Delegação de evento em vez de onclick inline com id interpolado
+      lista.querySelectorAll(".item-solicitacao-admin").forEach(el => {
+        el.addEventListener("click", function() {
+          abrirSolicitacaoAdmin(this.getAttribute("data-id"));
+        });
+      });
+    })
+    .withFailureHandler(erro => {
+      const lista = document.getElementById("listaSolicitacoesAdmin");
+      if (lista) lista.innerHTML = `<div style="color:#ef4444; padding:15px;">Erro ao carregar solicitações.</div>`;
+      console.error("Erro solicitações admin:", erro);
+    })
+    .getTodasSolicitacoes();
+}
+
+function abrirSolicitacaoAdmin(id) {
+  const body = document.querySelector("#chatSugestoes .chat-body");
+  if (!body) return;
+
+  google.script.run.marcarSolicitacaoLidaAdmin(id);
+
+  body.innerHTML = `
+    <div style="padding: 10px 0;">
+      <h3 style="margin: 0 0 16px; font-size: 15px; color: var(--text-main);">🔎 Analisar solicitação</h3>
+      <div id="detalhesSolicitacaoAdmin">
+        <div style="text-align:center; padding:25px; color:var(--text-muted);">Carregando...</div>
+      </div>
+    </div>
+  `;
+
+  google.script.run
+    .withSuccessHandler(solicitacoes => {
+      const item = solicitacoes.find(s => String(s.id) === String(id));
+
+      if (!item) {
+        body.innerHTML = `
+          <div style="text-align:center; padding:25px;">
+            <strong>Solicitação não encontrada.</strong>
+            <button type="button" class="chat-btn-minhas" onclick="mostrarSolicitacoesAdministracao()">← Voltar</button>
+          </div>
+        `;
+        return;
+      }
+
+      const status = item.status || "Pendente";
+
+      body.innerHTML = `
+        <div style="padding: 10px 0;">
+          <h3 style="margin:0 0 16px; font-size:15px; color:var(--text-main);">🔎 ${item.id}</h3>
+
+          <div style="border:1px solid var(--border-color); border-radius:10px; padding:12px; background:var(--bg-primary);">
+            <div style="font-size:11px; color:var(--text-muted); margin-bottom:6px;">${item.data || ""}</div>
+            <div style="font-size:12px; font-weight:600; color:var(--text-main);">${item.tipo || "Sem tipo"}</div>
+            <div style="font-size:10px; color:var(--text-muted); margin-top:6px;">👤 ${item.email || ""}</div>
+            <div style="margin-top:14px; font-size:12px; line-height:1.5; color:var(--text-main);">${item.descricao || ""}</div>
+          </div>
+
+          <label class="chat-label" style="margin-top:18px;">Status</label>
+          <select id="statusAdmin" style="
+              width:100%; box-sizing:border-box; padding:11px; border-radius:10px;
+              border:1px solid var(--border-color); background:var(--bg-primary); color:var(--text-main); outline:none;">
+            <option value="Pendente" ${status === "Pendente" ? "selected" : ""}>🟡 Pendente</option>
+            <option value="Em análise" ${status === "Em análise" ? "selected" : ""}>🔵 Em análise</option>
+            <option value="Resolvido" ${status === "Resolvido" ? "selected" : ""}>🟢 Resolvido</option>
+            <option value="Recusado" ${status === "Recusado" ? "selected" : ""}>🔴 Recusado</option>
+          </select>
+
+          <label class="chat-label" style="margin-top:16px;">Resposta</label>
+          <textarea id="respostaAdmin" class="chat-textarea" maxlength="1000" placeholder="Digite uma resposta para o usuário...">${item.resposta || ""}</textarea>
+
+          <button type="button" class="chat-btn-enviar" data-id="${escapeAttr(item.id)}" id="btnSalvarAdmin">💾 Salvar alteração</button>
+          <button type="button" class="chat-btn-minhas" onclick="mostrarSolicitacoesAdministracao()">← Voltar</button>
+        </div>
+      `;
+
+      document.getElementById("btnSalvarAdmin").addEventListener("click", function() {
+        salvarSolicitacaoAdmin(this.getAttribute("data-id"));
+      });
+    })
+    .withFailureHandler(erro => {
+      console.error("Erro ao abrir solicitação:", erro);
+      body.innerHTML = `
+        <div style="text-align:center; padding:25px;">
+          <div style="font-size:35px;">❌</div>
+          <strong>Não foi possível carregar</strong>
+          <button type="button" class="chat-btn-minhas" onclick="mostrarSolicitacoesAdministracao()">← Voltar</button>
+        </div>
+      `;
+    })
+    .getTodasSolicitacoes();
+}
+
+function salvarSolicitacaoAdmin(id) {
+  const status = document.getElementById("statusAdmin")?.value || "Pendente";
+  const resposta = document.getElementById("respostaAdmin")?.value.trim() || "";
+
+  const body = document.querySelector("#chatSugestoes .chat-body");
+  if (!body) return;
+
+  google.script.run
+    .withSuccessHandler(resultado => {
+      body.innerHTML = `
+        <div style="text-align:center; padding:30px 15px;">
+          <div style="font-size:40px; margin-bottom:10px;">✅</div>
+          <strong style="display:block; font-size:14px; color:var(--text-main); margin-bottom:8px;">Alteração salva!</strong>
+          <div style="font-size:12px; color:var(--text-muted); margin-bottom:20px;">A solicitação foi atualizada com sucesso.</div>
+          <button type="button" class="chat-btn-minhas" onclick="mostrarSolicitacoesAdministracao()">← Voltar para solicitações</button>
+        </div>
+      `;
+    })
+    .withFailureHandler(erro => {
+      console.error("Erro ao salvar solicitação:", erro);
+      alert("Erro ao salvar a solicitação.");
+    })
+    .atualizarSolicitacaoAdmin(id, status, resposta);
+}
+
+function abrirDashboardProducao() {
+  const overlay = document.getElementById("dashboardOverlay");
+  if (!overlay) return;
+
+  overlay.classList.add("active");
+  carregarDashboardProducao(false);
+
+  if (INTERVALO_DASHBOARD) clearInterval(INTERVALO_DASHBOARD);
+  INTERVALO_DASHBOARD = setInterval(() => carregarDashboardProducao(false), 60000);
+}
+
+function fecharDashboardProducao() {
+  const overlay = document.getElementById("dashboardOverlay");
+  if (overlay) overlay.classList.remove("active");
+
+  if (INTERVALO_DASHBOARD) {
+    clearInterval(INTERVALO_DASHBOARD);
+    INTERVALO_DASHBOARD = null;
+  }
+}
+
+function carregarDashboardProducao(forcar) {
+  const body = document.getElementById("dashboardBody");
+  const btnAtualizar = document.getElementById("btnAtualizarDashboard");
+  if (!body) return;
+
+  if (forcar && btnAtualizar) {
+    btnAtualizar.style.opacity = "0.5";
+    btnAtualizar.style.pointerEvents = "none";
+  }
+
+  google.script.run
+    .withSuccessHandler(dados => {
+      if (btnAtualizar) {
+        btnAtualizar.style.opacity = "1";
+        btnAtualizar.style.pointerEvents = "auto";
+      }
+      if (!dados) {
+        body.innerHTML = `<div style="text-align:center; padding:40px; color:var(--text-muted);">Não foi possível carregar os dados agora.</div>`;
+        return;
+      }
+      body.innerHTML = renderDashboardProducao(dados);
+    })
+    .withFailureHandler(erro => {
+      if (btnAtualizar) {
+        btnAtualizar.style.opacity = "1";
+        btnAtualizar.style.pointerEvents = "auto";
+      }
+      console.error("Erro dashboard produção:", erro);
+    })
+    .getDashboardProducao(!!forcar);
+}
+
+// Captura o painel inteiro (mesmo a parte que precisaria rolar pra ver)
+// e copia direto pra área de transferência, pronta pra colar no WhatsApp.
+function exportarDashboardImagem() {
+  const drawer = document.querySelector(".dashboard-drawer");
+  if (!drawer || typeof html2canvas === "undefined") {
+    alert("Não foi possível gerar a imagem. Tente novamente em alguns segundos.");
+    return;
+  }
+
+  const btnExportar = document.getElementById("btnExportarDashboard");
+  if (btnExportar) btnExportar.style.visibility = "hidden";
+
+  // Remove temporariamente o limite de altura/scroll pra capturar TUDO,
+  // não só a parte visível na tela no momento.
+  const alturaOriginal = drawer.style.height;
+  const overflowOriginal = drawer.style.overflow;
+  drawer.style.height = "auto";
+  drawer.style.overflow = "visible";
+
+  const corFundo = document.body.classList.contains("dark") ? "#0f172a" : "#f8fafc";
+
+  html2canvas(drawer, { backgroundColor: corFundo, scale: 2, useCORS: true }).then(canvas => {
+    drawer.style.height = alturaOriginal;
+    drawer.style.overflow = overflowOriginal;
+    if (btnExportar) btnExportar.style.visibility = "visible";
+
+    canvas.toBlob(blob => {
+      if (!blob) {
+        alert("Erro ao gerar a imagem.");
+        return;
+      }
+
+      if (navigator.clipboard && window.ClipboardItem) {
+        navigator.clipboard.write([new ClipboardItem({ "image/png": blob })])
+          .then(mostrarToastCopiado)
+          .catch(erro => {
+            console.error("Erro ao copiar para a área de transferência:", erro);
+            baixarImagemFallback(blob);
+          });
+      } else {
+        baixarImagemFallback(blob);
+      }
+    }, "image/png");
+
+  }).catch(erro => {
+    drawer.style.height = alturaOriginal;
+    drawer.style.overflow = overflowOriginal;
+    if (btnExportar) btnExportar.style.visibility = "visible";
+    console.error("Erro ao gerar imagem:", erro);
+    alert("Erro ao gerar a imagem.");
+  });
+}
+
+// Usado só se o navegador não suportar copiar imagem direto (ex: Safari antigo)
+function baixarImagemFallback(blob) {
+  const link = document.createElement("a");
+  const agora = new Date();
+  const nomeArquivo = "producao-jh-telecom-" +
+    agora.toLocaleDateString('pt-BR').replace(/\//g, "-") + "_" +
+    agora.toLocaleTimeString('pt-BR').replace(/:/g, "-") + ".png";
+  link.download = nomeArquivo;
+  link.href = URL.createObjectURL(blob);
+  link.click();
+}
+
+function mostrarToastCopiado() {
+  const toast = document.createElement("div");
+  toast.innerText = "📋 Imagem copiada! Já pode colar no WhatsApp.";
+  toast.style.cssText = "position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:#09124f; color:white; padding:12px 20px; border-radius:10px; font-size:13px; font-weight:600; z-index:99999; box-shadow:0 10px 25px rgba(0,0,0,0.3);";
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2500);
+}
+
+function renderDashboardProducao(d) {
+  const tipos = ["Ativação","Mudança de Cômodo","Mudança de Endereço","Reparo Corretivo","Upgrade/Downgrade"];
+  const statusLista = ["pendente","em rota","iniciado","concluído","não concluído","suspenso"];
+
+    const infoAtualizacao = window.ATUALIZACAO_BASE
+    ? `<div style="font-size:12px; color:var(--text-muted); margin-bottom:20px; display:flex; align-items:center; gap:6px;">
+         <span style="width:6px;height:6px;border-radius:50%;background:#10b981;display:inline-block;"></span>
+         Planilha de Prazos ${textoAtualizacao(window.ATUALIZACAO_BASE).toLowerCase()}
+       </div>`
+    : "";
+
+  // ---- KPIs em destaque ----
+  const kpis = `
+    <div class="kpi-strip">
+      <div class="kpi-item">
+        <div class="kpi-valor">${d.somaTotalGeral}</div>
+        <div class="kpi-label">Total geral</div>
+      </div>
+      <div class="kpi-item cor-verde">
+        <div class="kpi-valor">${d.somaLinha["concluído"] || 0}</div>
+        <div class="kpi-label">concluído</div>
+      </div>
+      <div class="kpi-item cor-amber">
+        <div class="kpi-valor">${d.somaLinha["pendente"] || 0}</div>
+        <div class="kpi-label">pendente</div>
+      </div>
+      <div class="kpi-item cor-vermelho">
+        <div class="kpi-valor">${d.somaLinha["não concluído"] || 0}</div>
+        <div class="kpi-label">não concluído</div>
+      </div>
+    </div>
+  `;
+
+  // ---- Composição por tipo de atividade (tabela) ----
+  const linhasComposicao = tipos.map(t => {
+    const linha = d.tabelaTipoStatus[t];
+    return `<tr><td>${t}</td>${statusLista.map(s => `<td>${linha[s] || 0}</td>`).join("")}<td><b>${linha.Total}</b></td></tr>`;
+  }).join("");
+
+  const secaoBreakdown = `
+    <div class="dash-secao">
+      <div class="dash-secao-titulo">Status das Atividades em Campo</div>
+      <div style="overflow-x:auto;">
+        <table class="dash-tabela">
+          <tr><th>Tipo</th>${statusLista.map(s => `<th>${s}</th>`).join("")}<th>Total</th></tr>
+          ${linhasComposicao}
+          <tr><td>Soma</td>${statusLista.map(s => `<td>${d.somaLinha[s] || 0}</td>`).join("")}<td>${d.somaTotalGeral}</td></tr>
+        </table>
+      </div>
+    </div>
+  `;
+
+  // ---- Pendentes / Período ----
+  const pend = d.pendentesPeriodo;
+  const linhaPeriodo = (nome, obj) => {
+    const soma = obj.Manhã + obj.Tarde || 1;
+    const pctManha = (obj.Manhã / soma) * 100;
+    return `
+      <div class="breakdown-linha">
+        <div class="breakdown-topo"><span>${nome}</span><b>${obj.Manhã + obj.Tarde}</b></div>
+        <div class="breakdown-barra">
+          <div class="breakdown-seg" style="width:${pctManha}%; background:#f59e0b" title="Manhã: ${obj.Manhã}"></div>
+          <div class="breakdown-seg" style="width:${100 - pctManha}%; background:#3b82f6" title="Tarde: ${obj.Tarde}"></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-muted); margin-top:5px;">
+          <span>🟠 Manhã: <b>${obj.Manhã}</b></span>
+          <span>🔵 Tarde: <b>${obj.Tarde}</b></span>
+        </div>
+      </div>
+    `;
+  };
+
+  const secaoPendentes = `
+    <div class="dash-secao">
+      <div class="dash-secao-titulo">Pendentes por período (🟠 Manhã · 🔵 Tarde)</div>
+      ${linhaPeriodo("Ativação", pend["Ativação"])}
+      ${linhaPeriodo("Mudança de Endereço", pend["Mudança de Endereço"])}
+    </div>
+  `;
+
+  // ---- Motivos (tabela leve) ----
+const motivos = Object.keys(d.motivos);
+const tiposMotivo = [
+  "Ativação",
+  "Mudança de Endereço",
+  "Reparo Corretivo",
+  "Mudança de Cômodo",
+  "Upgrade/Downgrade"
+];
+
+let secaoMotivos = "";
+
+if (motivos.length > 0) {
+
+  // Mantém SOMENTE os tipos que possuem algum valor
+  const tiposMotivoVisiveis = tiposMotivo.filter(t =>
+    motivos.some(m => Number(d.motivos[m]?.[t] || 0) > 0)
+  );
+
+  const totaisPorTipo = {};
+  tiposMotivoVisiveis.forEach(t => {
+    totaisPorTipo[t] = 0;
+  });
+
+  let totalGeral = 0;
+
+  const linhas = motivos.map(m => {
+    let totalLinha = 0;
+
+    const celulas = tiposMotivoVisiveis.map(t => {
+      const v = Number(d.motivos[m]?.[t] || 0);
+
+      totalLinha += v;
+      totaisPorTipo[t] += v;
+
+      return `<td>${v || "-"}</td>`;
+    }).join("");
+
+    totalGeral += totalLinha;
+
+    return `
+      <tr>
+        <td>${m}</td>
+        ${celulas}
+        <td>${totalLinha}</td>
+      </tr>
+    `;
+  }).join("");
+
+  secaoMotivos = `
+    <div class="dash-secao">
+      <div class="dash-secao-titulo">
+        Motivos dos serviços não concluídos
+      </div>
+
+      <table class="dash-tabela">
+        <tr>
+          <th>Motivo</th>
+          ${tiposMotivoVisiveis.map(t => `<th>${t}</th>`).join("")}
+          <th>Total</th>
+        </tr>
+
+        ${linhas}
+
+        <tr>
+          <td><strong>Total geral</strong></td>
+          ${tiposMotivoVisiveis.map(t =>
+            `<td><strong>${totaisPorTipo[t]}</strong></td>`
+          ).join("")}
+          <td><strong>${totalGeral}</strong></td>
+        </tr>
+      </table>
+    </div>
+  `;
+}
+
+  // ---- Reparos em campo (barra segmentada) ----
+  const f = d.reparos.faixas;
+  const totalReparos = d.reparos.total || 1;
+  const coresFaixa = { "Menor que 24hrs": "#10b981", "Menor que 36hrs": "#f59e0b", "Menor que 48hrs": "#f97316", "Outlier": "#ef4444" };
+  const pct = v => ((v / totalReparos) * 100).toFixed(1);
+
+  const secaoReparos = `
+    <div class="dash-secao">
+      <div class="dash-secao-titulo">Reparos em campo</div>
+      <div class="reparo-barra">
+        ${Object.keys(f).map(faixa => f[faixa] ? `<div class="reparo-seg" style="width:${pct(f[faixa])}%; background:${coresFaixa[faixa]}" title="${faixa}"></div>` : "").join("")}
+      </div>
+      <div class="reparo-legenda">
+        ${Object.keys(f).map(faixa => `
+          <div class="reparo-legenda-item">
+            <span><span class="dash-legenda-ponto" style="background:${coresFaixa[faixa]}"></span> ${faixa}</span>
+            <b>${f[faixa]} (${pct(f[faixa])}%)</b>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  `;
+
+  // ---- Médias ----
+  const secaoMedias = `
+    <div class="dash-secao">
+      <div class="dash-secao-titulo">Médias por Técnicos</div>
+      <div class="medias-strip">
+        <div class="media-chip">
+          <div class="kpi-valor">${d.mediaConcluidos}</div>
+          <div class="kpi-label">Concluídos / M.o</div>
+        </div>
+        <div class="media-chip">
+          <div class="kpi-valor">${d.mediaDespachada}</div>
+          <div class="kpi-label">Média de Despachos</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  return infoAtualizacao + kpis + secaoBreakdown + secaoPendentes + secaoMotivos + secaoReparos + secaoMedias;
+}
+
+</script>
+
+<div id="ultimaAtualizacao" style="
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-muted);
+    padding: 20px 0 30px 0;
+  ">
+</div>
+
+</body>
+</html>
