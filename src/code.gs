@@ -826,7 +826,7 @@ function debugStatusDashboard() {
 
   dados.forEach((linha, i) => {
     const valor = linha[0];
-    Logger.log(`Linha ${i + 2}: "${valor}" (tipo: ${typeof valor})`);
+    Logger.log(Linha ${i + 2}: "${valor}" (tipo: ${typeof valor}));
   });
 }
 
